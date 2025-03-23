@@ -11,12 +11,64 @@ export default function TodoApp() {
   const [calendarMode, setCalendarMode] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
+  // Load todos on initial mount
   useEffect(() => {
-    fetch("/todos.json")
-      .then((res) => res.json())
-      .then((data) => setTodos(data))
-      .catch(() => setTodos([]));
+    loadTodos();
   }, []);
+
+  // Auto-save whenever todos or completedTodos change
+  useEffect(() => {
+    if (todos.length > 0 || completedTodos.length > 0) {
+      saveTodos();
+    }
+  }, [todos, completedTodos]);
+
+  const loadTodos = () => {
+    try {
+      // Try to load from localStorage first
+      const savedData = localStorage.getItem('todos-data');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setTodos(parsedData.todos || []);
+        setCompletedTodos(parsedData.completedTodos || []);
+        console.log('Todos loaded from localStorage');
+        return;
+      }
+      
+      // If not in localStorage, try fetching from the server
+      fetch("/todos.json")
+        .then((res) => res.json())
+        .then((data) => {
+          setTodos(data.todos || []);
+          setCompletedTodos(data.completedTodos || []);
+          console.log('Todos loaded from server');
+        })
+        .catch((err) => {
+          console.log('Failed to load todos from server:', err);
+          setTodos([]);
+          setCompletedTodos([]);
+        });
+    } catch (error) {
+      console.error('Error loading todos:', error);
+      setTodos([]);
+      setCompletedTodos([]);
+    }
+  };
+
+  const saveTodos = () => {
+    try {
+      // Save to localStorage for immediate persistence
+      const data = { todos, completedTodos };
+      localStorage.setItem('todos-data', JSON.stringify(data));
+      console.log('Todos saved to localStorage');
+      
+      // You could also implement a server-side save here with fetch
+      // This is a simulated server save (in a real app, you'd use fetch with POST/PUT)
+      console.log('Todos would be saved to server here');
+    } catch (error) {
+      console.error('Error saving todos:', error);
+    }
+  };
 
   const addTodo = () => {
     if (!input.trim()) return;
@@ -46,6 +98,8 @@ export default function TodoApp() {
   const clearTodos = () => {
     setTodos([]);
     setCompletedTodos([]);
+    // Also clear localStorage when explicitly clearing todos
+    localStorage.removeItem('todos-data');
   };
 
   const downloadTodos = () => {
@@ -65,6 +119,14 @@ export default function TodoApp() {
     const updatedTodos = [...todos];
     updatedTodos.splice(index, 1);
     setTodos(updatedTodos);
+  };
+
+  const restoreTodo = (index) => {
+    const todoToRestore = completedTodos[index];
+    setTodos([...todos, todoToRestore]);
+    const updatedCompletedTodos = [...completedTodos];
+    updatedCompletedTodos.splice(index, 1);
+    setCompletedTodos(updatedCompletedTodos);
   };
 
   const generateCalendarDays = () => {
@@ -521,17 +583,47 @@ export default function TodoApp() {
                   padding: "8px", 
                   marginBottom: "5px", 
                   backgroundColor: "rgba(0, 119, 0, 0.1)", 
-                  borderRadius: "3px", 
-                  textDecoration: "line-through", 
-                  color: "rgba(0, 255, 0, 0.6)" 
+                  borderRadius: "3px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
                 }}
               >
-                {todo.text} (Due: {todo.dueDate})
+                <span style={{ 
+                  textDecoration: "line-through", 
+                  color: "rgba(0, 255, 0, 0.6)" 
+                }}>
+                  {todo.text} (Due: {todo.dueDate})
+                </span>
+                <button
+                  onClick={() => restoreTodo(index)}
+                  style={{ 
+                    backgroundColor: "#007700", 
+                    color: "white", 
+                    border: "none", 
+                    padding: "3px 8px", 
+                    borderRadius: "3px",
+                    cursor: "pointer",
+                    fontSize: "12px"
+                  }}
+                  title="Restore task"
+                >
+                  ↩️
+                </button>
               </li>
             ))}
           </ul>
         </div>
       )}
+      
+      <div style={{ 
+        textAlign: "center", 
+        fontSize: "12px", 
+        marginTop: "20px", 
+        color: "rgba(0, 255, 0, 0.5)" 
+      }}>
+        Auto-save enabled - Your todos are automatically saved locally
+      </div>
     </div>
   );
 }
