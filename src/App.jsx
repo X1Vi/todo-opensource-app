@@ -1,29 +1,7 @@
 import { useState, useEffect } from "react";
 import DatePickerModal from "./components/DatePickerModal";
+import { theme } from "./constants/theme";
 
-const theme = {
-  colors: {
-    background: "#0D0D0D",
-    text: "#00FFFF", // Cyan neon
-    primary: "#FF00FF", // Magenta neon
-    secondary: "rgba(255, 0, 255, 0.2)", // Semi-transparent magenta
-    accent: "#00FF00", // Green neon
-    error: "#FF0000", // Red neon
-    success: "#00FF99", // Mint neon
-  },
-  spacing: {
-    small: "5px",
-    medium: "10px",
-    large: "20px",
-  },
-  borderRadius: {
-    small: "3px",
-    medium: "5px",
-    large: "10px",
-  },
-  fontFamily: "'Courier New', monospace",
-  boxShadow: "0 0 20px rgba(255, 0, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3)", // Multi-color glow
-};
 
 export default function TodoApp() {
   const [todos, setTodos] = useState([]);
@@ -52,6 +30,25 @@ export default function TodoApp() {
       saveTodos();
     }
   }, [todos, completedTodos]);
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target.result);
+        setTodos(json.todos || []);
+        setCompletedTodos(json.completedTodos || []);
+        localStorage.setItem("todos-data", JSON.stringify(json));
+      } catch (error) {
+        console.error("Invalid JSON file:", error);
+      }
+    };
+    reader.readAsText(file);
+  };
+
 
   const loadTodos = () => {
     try {
@@ -280,6 +277,43 @@ export default function TodoApp() {
           >
             📥 Download JSON
           </button>
+
+          <button
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: theme.colors.text,
+              border: "none",
+              padding: `${theme.spacing.small} ${theme.spacing.medium}`,
+              borderRadius: theme.borderRadius.medium,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px", // Space between icon and text
+              fontSize: "16px",
+              fontWeight: "bold",
+              position: "relative",
+              overflow: "hidden"
+            }}
+            onClick={() => document.getElementById("fileInput")?.click()} // Trigger input when button is clicked
+            onMouseOver={(e) => (e.currentTarget.style.opacity = "0.9")}
+            onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
+          >
+            📤 Upload JSON
+            <input
+              id="fileInput"
+              type="file"
+              accept="application/json"
+              onChange={handleFileUpload}
+              style={{
+                position: "absolute",
+                opacity: 0,
+                width: "100%",
+                height: "100%",
+                cursor: "pointer"
+              }}
+            />
+          </button>
+
           <button
             onClick={clearTodos}
             style={{
