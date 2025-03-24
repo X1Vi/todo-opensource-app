@@ -1,4 +1,29 @@
 import { useState, useEffect } from "react";
+import DatePickerModal from "./components/DatePickerModal";
+
+const theme = {
+  colors: {
+    background: "#0D0D0D",
+    text: "#00FFFF", // Cyan neon
+    primary: "#FF00FF", // Magenta neon
+    secondary: "rgba(255, 0, 255, 0.2)", // Semi-transparent magenta
+    accent: "#00FF00", // Green neon
+    error: "#FF0000", // Red neon
+    success: "#00FF99", // Mint neon
+  },
+  spacing: {
+    small: "5px",
+    medium: "10px",
+    large: "20px",
+  },
+  borderRadius: {
+    small: "3px",
+    medium: "5px",
+    large: "10px",
+  },
+  fontFamily: "'Courier New', monospace",
+  boxShadow: "0 0 20px rgba(255, 0, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3)", // Multi-color glow
+};
 
 export default function TodoApp() {
   const [todos, setTodos] = useState([]);
@@ -10,6 +35,11 @@ export default function TodoApp() {
   const [dueDate, setDueDate] = useState(new Date());
   const [calendarMode, setCalendarMode] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // State variables for modal visibility
+  const [isStartTimeModalOpen, setIsStartTimeModalOpen] = useState(false);
+  const [isEndTimeModalOpen, setIsEndTimeModalOpen] = useState(false);
+  const [isDueDateModalOpen, setIsDueDateModalOpen] = useState(false);
 
   // Load todos on initial mount
   useEffect(() => {
@@ -34,7 +64,7 @@ export default function TodoApp() {
         console.log('Todos loaded from localStorage');
         return;
       }
-      
+
       // If not in localStorage, try fetching from the server
       fetch("/todos.json")
         .then((res) => res.json())
@@ -61,7 +91,7 @@ export default function TodoApp() {
       const data = { todos, completedTodos };
       localStorage.setItem('todos-data', JSON.stringify(data));
       console.log('Todos saved to localStorage');
-      
+
       // You could also implement a server-side save here with fetch
       // This is a simulated server save (in a real app, you'd use fetch with POST/PUT)
       console.log('Todos would be saved to server here');
@@ -135,25 +165,25 @@ export default function TodoApp() {
       currentMonth.getMonth() + 1,
       0
     ).getDate();
-    
+
     const firstDayOfMonth = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth(),
       1
     ).getDay();
-    
+
     let days = [];
-    
+
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(null);
     }
-    
+
     // Add days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(i);
     }
-    
+
     return days;
   };
 
@@ -163,15 +193,15 @@ export default function TodoApp() {
 
   const getTodosForDay = (day) => {
     if (!day) return [];
-    
+
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toDateString();
     return todos.filter(todo => new Date(todo.dueDate).toDateString() === date);
   };
 
   const days = generateCalendarDays();
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                      'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
 
   return (
     <div style={{
@@ -179,66 +209,86 @@ export default function TodoApp() {
       flexDirection: "column",
       minHeight: "100vh",
       width: "100%",
-      backgroundColor: "black",
-      color: "#00FF00",
-      padding: "20px",
-      fontFamily: "monospace",
-      border: "2px solid #007700",
-      borderRadius: "5px",
+      backgroundColor: theme.colors.background,
+      color: theme.colors.text,
+      padding: theme.spacing.large,
+      fontFamily: theme.fontFamily,
+      border: `2px solid ${theme.colors.primary}`,
+      borderRadius: theme.borderRadius.medium,
       boxSizing: "border-box",
-      boxShadow: "0 4px 8px rgba(0, 255, 0, 0.3)"
+      boxShadow: theme.boxShadow
     }}>
-      <h2 style={{ 
-        textAlign: "center", 
-        marginBottom: "20px", 
-        borderBottom: "2px solid #007700", 
-        paddingBottom: "10px" 
+
+      <DatePickerModal
+        isOpen={isStartTimeModalOpen}
+        onClose={() => setIsStartTimeModalOpen(false)}
+        selectedDate={startTime}
+        onDateChange={(date) => setStartTime(date)}
+      />
+      <DatePickerModal
+        isOpen={isEndTimeModalOpen}
+        onClose={() => setIsEndTimeModalOpen(false)}
+        selectedDate={endTime}
+        onDateChange={(date) => setEndTime(date)}
+      />
+      <DatePickerModal
+        isOpen={isDueDateModalOpen}
+        onClose={() => setIsDueDateModalOpen(false)}
+        selectedDate={dueDate}
+        onDateChange={(date) => setDueDate(date)}
+      />
+
+      <h2 style={{
+        textAlign: "center",
+        marginBottom: theme.spacing.large,
+        borderBottom: `2px solid ${theme.colors.primary}`,
+        paddingBottom: theme.spacing.medium
       }}>
         📜 Terminal To-Do App
       </h2>
-      
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        marginBottom: "15px" 
+
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        marginBottom: theme.spacing.medium
       }}>
-        <button 
-          onClick={() => setCalendarMode(!calendarMode)} 
-          style={{ 
-            backgroundColor: "#007700", 
-            color: "#00FF00", 
-            border: "none", 
-            padding: "10px", 
-            borderRadius: "5px", 
-            cursor: "pointer" 
+        <button
+          onClick={() => setCalendarMode(!calendarMode)}
+          style={{
+            backgroundColor: theme.colors.primary,
+            color: theme.colors.text,
+            border: "none",
+            padding: theme.spacing.medium,
+            borderRadius: theme.borderRadius.medium,
+            cursor: "pointer"
           }}
         >
           {calendarMode ? "📃 List Mode" : "📅 Calendar Mode"}
         </button>
-        
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button 
-            onClick={downloadTodos} 
-            style={{ 
-              backgroundColor: "#007700", 
-              color: "#00FF00", 
-              border: "none", 
-              padding: "10px", 
-              borderRadius: "5px", 
-              cursor: "pointer" 
+
+        <div style={{ display: "flex", gap: theme.spacing.medium }}>
+          <button
+            onClick={downloadTodos}
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: theme.colors.text,
+              border: "none",
+              padding: theme.spacing.medium,
+              borderRadius: theme.borderRadius.medium,
+              cursor: "pointer"
             }}
           >
             📥 Download JSON
           </button>
-          <button 
-            onClick={clearTodos} 
-            style={{ 
-              backgroundColor: "red", 
-              color: "white", 
-              border: "none", 
-              padding: "10px", 
-              borderRadius: "5px", 
-              cursor: "pointer" 
+          <button
+            onClick={clearTodos}
+            style={{
+              backgroundColor: theme.colors.error,
+              color: "white",
+              border: "none",
+              padding: theme.spacing.medium,
+              borderRadius: theme.borderRadius.medium,
+              cursor: "pointer"
             }}
           >
             ❌ Clear All
@@ -247,22 +297,22 @@ export default function TodoApp() {
       </div>
 
       {calendarMode ? (
-        <div style={{ flex: 1, marginBottom: "20px" }}>
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center", 
-            marginBottom: "15px" 
+        <div style={{ flex: 1, marginBottom: theme.spacing.large }}>
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: theme.spacing.medium
           }}>
-            <button 
-              onClick={() => changeMonth(-1)} 
-              style={{ 
-                backgroundColor: "#007700", 
-                color: "#00FF00", 
-                border: "none", 
-                padding: "5px 10px", 
-                borderRadius: "5px", 
-                cursor: "pointer" 
+            <button
+              onClick={() => changeMonth(-1)}
+              style={{
+                backgroundColor: theme.colors.primary,
+                color: theme.colors.text,
+                border: "none",
+                padding: theme.spacing.small,
+                borderRadius: theme.borderRadius.medium,
+                cursor: "pointer"
               }}
             >
               ◀ Prev
@@ -270,74 +320,74 @@ export default function TodoApp() {
             <h3 style={{ margin: 0 }}>
               {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </h3>
-            <button 
-              onClick={() => changeMonth(1)} 
-              style={{ 
-                backgroundColor: "#007700", 
-                color: "#00FF00", 
-                border: "none", 
-                padding: "5px 10px", 
-                borderRadius: "5px", 
-                cursor: "pointer" 
+            <button
+              onClick={() => changeMonth(1)}
+              style={{
+                backgroundColor: theme.colors.primary,
+                color: theme.colors.text,
+                border: "none",
+                padding: theme.spacing.small,
+                borderRadius: theme.borderRadius.medium,
+                cursor: "pointer"
               }}
             >
               Next ▶
             </button>
           </div>
-          
-          <div style={{ 
-            display: "grid", 
-            gridTemplateColumns: "repeat(7, 1fr)", 
-            gap: "5px", 
-            marginBottom: "15px" 
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            gap: theme.spacing.small,
+            marginBottom: theme.spacing.medium
           }}>
             {dayNames.map((day, i) => (
-              <div 
-                key={i} 
-                style={{ 
-                  textAlign: "center", 
-                  fontWeight: "bold", 
-                  padding: "5px", 
-                  backgroundColor: "rgba(0, 119, 0, 0.3)", 
-                  borderRadius: "3px" 
+              <div
+                key={i}
+                style={{
+                  textAlign: "center",
+                  fontWeight: "bold",
+                  padding: theme.spacing.small,
+                  backgroundColor: theme.colors.secondary,
+                  borderRadius: theme.borderRadius.small
                 }}
               >
                 {day}
               </div>
             ))}
-            
+
             {days.map((day, i) => (
-              <div 
-                key={i} 
-                style={{ 
-                  height: "100px", 
-                  padding: "5px", 
-                  backgroundColor: day ? "rgba(0, 119, 0, 0.2)" : "transparent", 
-                  borderRadius: "3px", 
-                  overflow: "auto" 
+              <div
+                key={i}
+                style={{
+                  height: "100px",
+                  padding: theme.spacing.small,
+                  backgroundColor: day ? theme.colors.secondary : "transparent",
+                  borderRadius: theme.borderRadius.small,
+                  overflow: "auto"
                 }}
               >
                 {day && (
                   <>
-                    <div style={{ 
-                      fontWeight: "bold", 
-                      marginBottom: "5px",
-                      fontSize: "14px" 
+                    <div style={{
+                      fontWeight: "bold",
+                      marginBottom: theme.spacing.small,
+                      fontSize: "14px"
                     }}>
                       {day}
                     </div>
                     {getTodosForDay(day).map((todo, index) => (
-                      <div 
-                        key={index} 
-                        style={{ 
-                          fontSize: "12px", 
-                          padding: "3px", 
-                          marginBottom: "3px", 
-                          backgroundColor: "rgba(0, 119, 0, 0.4)", 
-                          borderRadius: "3px", 
-                          overflow: "hidden", 
-                          textOverflow: "ellipsis", 
-                          whiteSpace: "nowrap" 
+                      <div
+                        key={index}
+                        style={{
+                          fontSize: "12px",
+                          padding: theme.spacing.small,
+                          marginBottom: theme.spacing.small,
+                          backgroundColor: theme.colors.secondary,
+                          borderRadius: theme.borderRadius.small,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
                         }}
                         title={todo.text}
                       >
@@ -351,68 +401,68 @@ export default function TodoApp() {
           </div>
         </div>
       ) : (
-        <div style={{ 
-          flex: 1, 
-          overflowY: "auto", 
-          marginBottom: "20px",
+        <div style={{
+          flex: 1,
+          overflowY: "auto",
+          marginBottom: theme.spacing.large,
           maxHeight: "400px"
         }}>
           {todos.length === 0 ? (
-            <div style={{ 
-              textAlign: "center", 
-              padding: "20px", 
-              color: "#007700" 
+            <div style={{
+              textAlign: "center",
+              padding: theme.spacing.large,
+              color: theme.colors.primary
             }}>
               No todos yet. Add your first task below!
             </div>
           ) : (
-            <ul style={{ 
-              listStyleType: "none", 
-              padding: 0, 
-              margin: 0 
+            <ul style={{
+              listStyleType: "none",
+              padding: 0,
+              margin: 0
             }}>
               {todos.map((todo, index) => (
-                <li 
-                  key={index} 
-                  style={{ 
-                    marginBottom: "10px", 
-                    padding: "10px", 
-                    border: "1px solid #007700", 
-                    borderRadius: "5px", 
-                    backgroundColor: "rgba(0, 119, 0, 0.2)" 
+                <li
+                  key={index}
+                  style={{
+                    marginBottom: theme.spacing.medium,
+                    padding: theme.spacing.medium,
+                    border: `1px solid ${theme.colors.primary}`,
+                    borderRadius: theme.borderRadius.medium,
+                    backgroundColor: theme.colors.secondary
                   }}
                 >
-                  <div style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between", 
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: "8px" 
+                    marginBottom: theme.spacing.small
                   }}>
                     <div style={{ fontWeight: "bold", fontSize: "16px" }}>📝 {todo.text}</div>
-                    <div style={{ display: "flex", gap: "5px" }}>
-                      <button 
-                        onClick={() => completeTodo(index)} 
-                        style={{ 
-                          backgroundColor: "#007700", 
-                          color: "white", 
-                          border: "none", 
-                          padding: "3px 8px", 
-                          borderRadius: "3px",
-                          cursor: "pointer" 
+                    <div style={{ display: "flex", gap: theme.spacing.small }}>
+                      <button
+                        onClick={() => completeTodo(index)}
+                        style={{
+                          backgroundColor: theme.colors.primary,
+                          color: "white",
+                          border: "none",
+                          padding: theme.spacing.small,
+                          borderRadius: theme.borderRadius.small,
+                          cursor: "pointer"
                         }}
                         title="Mark as completed"
                       >
                         ✓
                       </button>
-                      <button 
-                        onClick={() => removeTodo(index)} 
-                        style={{ 
-                          backgroundColor: "red", 
-                          color: "white", 
-                          border: "none", 
-                          padding: "3px 8px", 
-                          borderRadius: "3px",
-                          cursor: "pointer" 
+                      <button
+                        onClick={() => removeTodo(index)}
+                        style={{
+                          backgroundColor: theme.colors.error,
+                          color: "white",
+                          border: "none",
+                          padding: theme.spacing.small,
+                          borderRadius: theme.borderRadius.small,
+                          cursor: "pointer"
                         }}
                         title="Delete task"
                       >
@@ -420,7 +470,7 @@ export default function TodoApp() {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div style={{ fontSize: "14px" }}>
                     <div>🗒 Notes: {todo.notes}</div>
                     <div>⏳ Time: {todo.startTime} - {todo.endTime}</div>
@@ -433,38 +483,38 @@ export default function TodoApp() {
         </div>
       )}
 
-      <div style={{ 
-        backgroundColor: "rgba(0, 119, 0, 0.2)", 
-        padding: "15px", 
-        borderRadius: "5px", 
-        marginTop: "auto" 
+      <div style={{
+        backgroundColor: theme.colors.secondary,
+        padding: theme.spacing.medium,
+        borderRadius: theme.borderRadius.medium,
+        marginTop: "auto"
       }}>
         <input
-          style={{ 
-            backgroundColor: "black", 
-            color: "#00FF00", 
-            border: "1px solid #007700", 
-            padding: "8px", 
-            width: "100%", 
-            marginBottom: "10px", 
-            borderRadius: "5px",
+          style={{
+            backgroundColor: theme.colors.background,
+            color: theme.colors.text,
+            border: `1px solid ${theme.colors.primary}`,
+            padding: theme.spacing.small,
+            width: "100%",
+            marginBottom: theme.spacing.medium,
+            borderRadius: theme.borderRadius.medium,
             boxSizing: "border-box"
           }}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Enter a new todo..."
         />
-        
+
         <textarea
-          style={{ 
-            width: "100%", 
-            height: "60px", 
-            marginBottom: "10px", 
-            backgroundColor: "black", 
-            color: "#00FF00", 
-            border: "1px solid #007700", 
-            borderRadius: "5px", 
-            padding: "8px",
+          style={{
+            width: "100%",
+            height: "60px",
+            marginBottom: theme.spacing.medium,
+            backgroundColor: theme.colors.background,
+            color: theme.colors.text,
+            border: `1px solid ${theme.colors.primary}`,
+            borderRadius: theme.borderRadius.medium,
+            padding: theme.spacing.small,
             boxSizing: "border-box",
             resize: "vertical"
           }}
@@ -472,65 +522,62 @@ export default function TodoApp() {
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Additional notes..."
         />
-        
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "repeat(3, 1fr)", 
-          gap: "10px", 
-          marginBottom: "10px" 
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: theme.spacing.medium,
+          marginBottom: theme.spacing.medium
         }}>
           <div>
-            <label style={{ display: "block", marginBottom: "5px", fontSize: "14px" }}>Due Date:</label>
-            <input 
-              type="date"
-              style={{ 
-                width: "100%", 
-                backgroundColor: "black", 
-                color: "#00FF00", 
-                border: "1px solid #007700", 
-                padding: "5px", 
-                borderRadius: "3px",
-                boxSizing: "border-box"
+            <label style={{ display: "block", marginBottom: theme.spacing.small, fontSize: "14px" }}>Due Date:</label>
+            <button
+              onClick={() => setIsDueDateModalOpen(true)}
+              style={{
+                width: "100%",
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text,
+                border: `1px solid ${theme.colors.primary}`,
+                padding: theme.spacing.small,
+                borderRadius: theme.borderRadius.medium,
+                boxSizing: "border-box",
+                cursor: "pointer"
               }}
-              value={dueDate.toISOString().split('T')[0]}
-              onChange={(e) => setDueDate(new Date(e.target.value))}
-            />
+            >
+              {dueDate.toLocaleDateString()}
+            </button>
           </div>
-          
+
           <div>
-            <label style={{ display: "block", marginBottom: "5px", fontSize: "14px" }}>Start Time:</label>
-            <input 
-              type="time"
-              style={{ 
-                width: "100%", 
-                backgroundColor: "black", 
-                color: "#00FF00", 
-                border: "1px solid #007700", 
-                padding: "5px", 
-                borderRadius: "3px",
-                boxSizing: "border-box"
+            <label style={{ display: "block", marginBottom: theme.spacing.small, fontSize: "14px" }}>Start Time:</label>
+            <button
+              onClick={() => setIsStartTimeModalOpen(true)}
+              style={{
+                width: "100%",
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text,
+                border: `1px solid ${theme.colors.primary}`,
+                padding: theme.spacing.small,
+                borderRadius: theme.borderRadius.medium,
+                boxSizing: "border-box",
+                cursor: "pointer"
               }}
-              value={`${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`}
-              onChange={(e) => {
-                const [hours, minutes] = e.target.value.split(':').map(Number);
-                const newDate = new Date();
-                newDate.setHours(hours, minutes);
-                setStartTime(newDate);
-              }}
-            />
+            >
+              {startTime.toLocaleTimeString()}
+            </button>
           </div>
-          
+
           <div>
-            <label style={{ display: "block", marginBottom: "5px", fontSize: "14px" }}>End Time:</label>
-            <input 
-              type="time"
-              style={{ 
-                width: "100%", 
-                backgroundColor: "black", 
-                color: "#00FF00", 
-                border: "1px solid #007700", 
-                padding: "5px", 
-                borderRadius: "3px",
+            <label style={{ display: "block", marginBottom: theme.spacing.small, fontSize: "14px" }}>End Time:</label>
+            <button
+              onClick={() => setIsEndTimeModalOpen(true)}
+              style={{
+                width: "100%",
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text,
+                border: `1px solid ${theme.colors.primary}`,
+                padding: theme.spacing.small,
+                borderRadius: theme.borderRadius.medium,
                 boxSizing: "border-box"
               }}
               value={`${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`}
@@ -540,19 +587,19 @@ export default function TodoApp() {
                 newDate.setHours(hours, minutes);
                 setEndTime(newDate);
               }}
-            />
+            > {endTime.toLocaleTimeString()} </button>
           </div>
         </div>
-        
-        <button 
-          onClick={addTodo} 
-          style={{ 
-            width: "100%", 
-            backgroundColor: "#007700", 
-            color: "#00FF00", 
-            border: "none", 
-            padding: "10px", 
-            borderRadius: "5px", 
+
+        <button
+          onClick={addTodo}
+          style={{
+            width: "100%",
+            backgroundColor: theme.colors.primary,
+            color: theme.colors.text,
+            border: "none",
+            padding: theme.spacing.medium,
+            borderRadius: theme.borderRadius.medium,
             cursor: "pointer",
             fontWeight: "bold",
             fontSize: "16px"
@@ -561,48 +608,48 @@ export default function TodoApp() {
           ➕ Add Task
         </button>
       </div>
-      
+
       {completedTodos.length > 0 && (
-        <div style={{ marginTop: "20px" }}>
-          <h3 style={{ 
-            marginBottom: "10px", 
-            paddingBottom: "5px", 
-            borderBottom: "1px solid #007700" 
+        <div style={{ marginTop: theme.spacing.large }}>
+          <h3 style={{
+            marginBottom: theme.spacing.medium,
+            paddingBottom: theme.spacing.small,
+            borderBottom: `1px solid ${theme.colors.primary}`
           }}>
             ✓ Completed Tasks
           </h3>
-          <ul style={{ 
-            listStyleType: "none", 
-            padding: 0, 
-            margin: 0 
+          <ul style={{
+            listStyleType: "none",
+            padding: 0,
+            margin: 0
           }}>
             {completedTodos.map((todo, index) => (
-              <li 
-                key={index} 
-                style={{ 
-                  padding: "8px", 
-                  marginBottom: "5px", 
-                  backgroundColor: "rgba(0, 119, 0, 0.1)", 
-                  borderRadius: "3px",
+              <li
+                key={index}
+                style={{
+                  padding: theme.spacing.small,
+                  marginBottom: theme.spacing.small,
+                  backgroundColor: theme.colors.secondary,
+                  borderRadius: theme.borderRadius.small,
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center"
                 }}
               >
-                <span style={{ 
-                  textDecoration: "line-through", 
-                  color: "rgba(0, 255, 0, 0.6)" 
+                <span style={{
+                  textDecoration: "line-through",
+                  color: theme.colors.accent
                 }}>
                   {todo.text} (Due: {todo.dueDate})
                 </span>
                 <button
                   onClick={() => restoreTodo(index)}
-                  style={{ 
-                    backgroundColor: "#007700", 
-                    color: "white", 
-                    border: "none", 
-                    padding: "3px 8px", 
-                    borderRadius: "3px",
+                  style={{
+                    backgroundColor: theme.colors.primary,
+                    color: "white",
+                    border: "none",
+                    padding: theme.spacing.small,
+                    borderRadius: theme.borderRadius.small,
                     cursor: "pointer",
                     fontSize: "12px"
                   }}
@@ -615,12 +662,12 @@ export default function TodoApp() {
           </ul>
         </div>
       )}
-      
-      <div style={{ 
-        textAlign: "center", 
-        fontSize: "12px", 
-        marginTop: "20px", 
-        color: "rgba(0, 255, 0, 0.5)" 
+
+      <div style={{
+        textAlign: "center",
+        fontSize: "12px",
+        marginTop: theme.spacing.large,
+        color: theme.colors.accent
       }}>
         Auto-save enabled - Your todos are automatically saved locally
       </div>
