@@ -192,7 +192,7 @@ export default function TodoApp() {
     if (!day) return [];
 
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toDateString();
-    return todos.filter(todo => new Date(todo.dueDate).toDateString() === date);
+    return [...todos, ...completedTodos].filter(todo => new Date(todo.dueDate).toDateString() === date);
   };
 
   const days = generateCalendarDays();
